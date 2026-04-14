@@ -5,8 +5,8 @@ module top_audio_init (
     input  logic  pb_rst,
     input logic tone_switch_in,
     
-    (* mark_debug = "true" *) inout  logic  i2c_sda,
-    (* mark_debug = "true" *) output logic  i2c_scl,
+    inout  logic  i2c_sda,
+    output logic  i2c_scl,
     output logic codec_rst_n,
     
     output logic init_error,
@@ -44,15 +44,15 @@ module top_audio_init (
     );
 
     assign sys_rst_n = ~pb_rst; 
-    assign codec_rst_n = sys_rst_n;
-    assign i2s_master_clock = mhz24_clk;
+    assign codec_rst_n = sys_rst_n & clk_locked;
+    assign i2s_master_clock = mhz24_clk & clk_locked;
 
     assign b_on = ~tone_switch_in;
     assign a_on = tone_switch_in;
 
     I2Controller i2c_mac (
         .master_clock(sys_clk),
-        .reset_n(sys_rst_n),
+        .reset_n(codec_rst_n),
         .SDA(i2c_sda),
         .SCL(i2c_scl),
         .error(init_error),
