@@ -35,56 +35,46 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
     //---------------------Block ROM Init-------------------
     logic [7:0] byte_rom [0: NUM_INSTRUCTIONS-1];//Static read only memory to configure I2C
         initial begin
-            // --- Reg 0: Select Page 0 ---
-            byte_rom[0]  = 8'h30; // Device I2C address
-            byte_rom[1]  = 8'h00; // Reg 0: Page select
-            byte_rom[2]  = 8'h00; // Page 0
-
-            // --- Reg 1: Software Reset ---
+            //select page 0 - reg 0
+            byte_rom[0]  = 8'h30;
+            byte_rom[1]  = 8'h00;
+            byte_rom[2]  = 8'h00;
+            //Software reset - reg 1
             byte_rom[3]  = 8'h30;
-            byte_rom[4]  = 8'h01; // Reg 1: Software reset
-            byte_rom[5]  = 8'h80; // D7=1: Self-clearing reset
-
-            // --- Reg 19: Route LINE1L to Left PGA & Power Up Left ADC Channel ---
-            // Even though we bypass the ADC digital part, the analog PGA needs power[cite: 206, 208].
+            byte_rom[4]  = 8'h01;
+            byte_rom[5]  = 8'h80;
+            //Power up left ADC - reg 19
             byte_rom[6]  = 8'h30;
-            byte_rom[7]  = 8'h13; // Reg 19 (0x13) [cite: 179]
-            byte_rom[8]  = 8'h04; // D6-D3=0000: LINE1L to Left-PGA (0dB) [cite: 194, 195], D2=1: Power up Left-ADC channel [cite: 206, 208]
-
-            // --- Reg 22: Route LINE1R to Right PGA & Power Up Right ADC Channel ---
+            byte_rom[7]  = 8'h13;
+            byte_rom[8]  = 8'h04;
+            //Power up right ADC - reg 22
             byte_rom[9]  = 8'h30;
-            byte_rom[10] = 8'h16; // Reg 22 (0x16) [cite: 235]
-            byte_rom[11] = 8'h04; // D6-D3=0000: LINE1R to Right-PGA (0dB) [cite: 237], D2=1: Power up Right-ADC channel [cite: 237]
-
-            // --- Reg 15: Unmute Left PGA ---
+            byte_rom[10] = 8'h16; 
+            byte_rom[11] = 8'h04;
+            //Unmute the left PGA, Volume gain at 0db - reg 15
             byte_rom[12] = 8'h30;
-            byte_rom[13] = 8'h0F; // Reg 15 (0x0F) [cite: 160]
-            byte_rom[14] = 8'h00; // D7=0: Unmute Left PGA, D6-D0=0000000: 0dB gain [cite: 159]
-
-            // --- Reg 16: Unmute Right PGA ---
+            byte_rom[13] = 8'h0F; 
+            byte_rom[14] = 8'h00; 
+            //Unmute the right PGA, Volume gain at 0db - reg 16
             byte_rom[15] = 8'h30;
-            byte_rom[16] = 8'h10; // Reg 16 (0x10) [cite: 161]
-            byte_rom[17] = 8'h00; // D7=0: Unmute Right PGA, D6-D0=0000000: 0dB gain [cite: 161]
-
-            // --- Reg 81: Route PGA_L to LEFT_LOP/M (Bypass Path) ---
+            byte_rom[16] = 8'h10; 
+            byte_rom[17] = 8'h00; 
+            //Route PGA_L to left LOP - reg 81
             byte_rom[18] = 8'h30;
-            byte_rom[19] = 8'h51; // Reg 81 (0x51) [cite: 532]
-            byte_rom[20] = 8'h80; // D7=1: Route PGA_L to LEFT_LOP/M [cite: 533], D6-D0=0000000: 0dB [cite: 533]
-
-            // --- Reg 86: Power up LEFT_LOP/M, unmute, 0dB output level ---
+            byte_rom[19] = 8'h51; 
+            byte_rom[20] = 8'h80; 
+            //Unmute and power up the left LOP - reg 86
             byte_rom[21] = 8'h30;
-            byte_rom[22] = 8'h56; // Reg 86 (0x56) [cite: 550]
-            byte_rom[23] = 8'h09; // D7-D4=0000: 0dB [cite: 551], D3=1: Unmute [cite: 551], D0=1: Power up [cite: 551]
-
-            // --- Reg 91: Route PGA_R to RIGHT_LOP/M (Bypass Path) ---
+            byte_rom[22] = 8'h56; 
+            byte_rom[23] = 8'h09;
+            //Route PGA_R to right LOP - reg 91
             byte_rom[24] = 8'h30;
-            byte_rom[25] = 8'h5B; // Reg 91 (0x5B) [cite: 567]
-            byte_rom[26] = 8'h80; // D7=1: Route PGA_R to RIGHT_LOP/M [cite: 568], D6-D0=0000000: 0dB [cite: 568]
-
-            // --- Reg 93: Power up RIGHT_LOP/M, unmute, 0dB output level ---
+            byte_rom[25] = 8'h5B; 
+            byte_rom[26] = 8'h80; 
+            //Unmute and power up the right LOP - reg 93
             byte_rom[27] = 8'h30;
-            byte_rom[28] = 8'h5D; // Reg 93 (0x5D) [cite: 571]
-            byte_rom[29] = 8'h09; // D7-D4=0000: 0dB [cite: 572], D3=1: Unmute [cite: 572], D0=1: Power up [cite: 582]
+            byte_rom[28] = 8'h5D;
+            byte_rom[29] = 8'h09; 
         end
 
 
@@ -104,6 +94,7 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
             data_cycle <= 2'b00;
             stop_issued <= 0;
         end else begin
+            //After hardware reset, give the codec time to power up before sending data on the I2C line
             if(delay_flag)begin
                 if(reset_counter >= 99999999)begin
                     reset_counter <= 0;
@@ -112,6 +103,8 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
                     reset_counter <= reset_counter + 1;
                 end
             end else begin
+                //one full period every 1000 clock cycles
+                //100Mhz input, 100Khz output
                 if(counter == 9'd499)begin
                     //release SDA for readack
                     if(state == ACKNOWLEDGE)drive_sda_high<=1;
@@ -126,6 +119,7 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
                     counter <= 9'd0; //reset counter
                     state <= next;
                 end else begin
+                    //change during the middle of the clock cycle
                     if(counter== 9'd249)begin
                         //--------------------------------STATE MACHINE IMPLEMENTATION----------------------------
                         case(state)
@@ -143,6 +137,7 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
                                 write_counter <= write_counter + 1;
                             end
                             STOP:begin
+                                //If passed the 5th instruction(software reset) - flag the reset
                                 if(instruction_counter == 6)begin
                                     reset_flag <= 1;
                                 end
@@ -166,7 +161,7 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
                             end 
                             EXECUTE_STOP:begin
                                 drive_sda_high <= 1;
-                                
+                                //before sending more data after software reset, wait for some time
                                 if(reset_flag)begin
                                     if(reset_counter >= 99999)begin
                                         reset_flag <= 0;
@@ -230,7 +225,4 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
             DONE: done = 1;
         endcase
     end
-
-    //Write to Registers
-    //Confirm Success or Error
 endmodule
