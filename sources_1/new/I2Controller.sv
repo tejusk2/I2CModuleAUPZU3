@@ -35,50 +35,6 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
     //---------------------Block ROM Init-------------------
     logic [7:0] byte_rom [0: NUM_INSTRUCTIONS-1];//Static read only memory to configure I2C
         initial begin
-            /*
-            byte_rom[0] = 8'h30; byte_rom[1] = 8'h01; byte_rom[2] = 8'h80; //software reset
-            //W 30 6C 01   Reg 108: SW-L1 closed, LINE1LP → LEFT_LOP
-            byte_rom[3] = 8'h30; byte_rom[4] = 8'h6C; byte_rom[5] = 8'h01;
-            //Route Line1LP to the Left ADC, Power up Left ADC W 30 13 04
-            byte_rom[6] = 8'h30; byte_rom[7] = 8'h13; byte_rom[8] = 8'h04;
-            //Route Line1RP to the Right ADC, Power up Right ADC W 30 16 04
-            byte_rom[9] = 8'h30; byte_rom[10] = 8'h16; byte_rom[11] = 8'h04;
-            //Unmute Left PGA, set gain to 0 dB W 30 0F 00
-            byte_rom[12] = 8'h30; byte_rom[13] = 8'h0F; byte_rom[14] = 8'h00;
-            //Unmute Right PGA, set gain to 0dB W 30 10 00
-            byte_rom[15] = 8'h30; byte_rom[16] = 8'h10; byte_rom[17] = 8'h00;
-
-
-
-            byte_rom[18]= 8'h30; byte_rom[19]= 8'h07; byte_rom[20]= 8'h0A; //Right DATA to right DAC, left DATA to left DAC 
-
-            byte_rom[21]= 8'h30; byte_rom[22]= 8'h25; byte_rom[23]= 8'hC0; //Power Up DAC
-
-            byte_rom[24]= 8'h30; byte_rom[25]= 8'h2B; byte_rom[26]= 8'h00; //UNMUTE LEFT and RIGHT DACS
-            byte_rom[27]= 8'h30; byte_rom[28]= 8'h2C; byte_rom[29]= 8'h00;
-
-            byte_rom[30]= 8'h30; byte_rom[31]= 8'h52; byte_rom[32]= 8'h80; // Route left dac to left line out
-            byte_rom[33]= 8'h30; byte_rom[34]= 8'h5C; byte_rom[35]= 8'h80; // Rough right dac to righ lineout
-
-            byte_rom[36]= 8'h30; byte_rom[37]= 8'h56; byte_rom[38]= 8'h09; //power up left and right line outs and set gain to 0DB
-            byte_rom[39]= 8'h30; byte_rom[40]= 8'h5D; byte_rom[41]= 8'h09; */
-            /*
-            // --- Reg 0: Select Page 0 ---
-            byte_rom[0]  = 8'h30; // Device I2C address
-            byte_rom[1]  = 8'h00; // Reg 0: Page select
-            byte_rom[2]  = 8'h00; // Page 0
-
-            // --- Reg 1: Software Reset ---
-            byte_rom[3]  = 8'h30;
-            byte_rom[4]  = 8'h01; // Reg 1: Software reset
-            byte_rom[5]  = 8'h80; // D7=1: Self-clearing reset
-
-            // --- Reg 108: Passive Analog Bypass (SINGLE-ENDED) ---
-            byte_rom[6]  = 8'h30;
-            byte_rom[7]  = 8'h6C; // Reg 108 (0x6C)
-            byte_rom[8]  = 8'h11; // D4=1 (LINE1RP to RIGHT_LOP), D0=1 (LINE1LP to LEFT_LOP)
-            */
-
             // --- Reg 0: Select Page 0 ---
             byte_rom[0]  = 8'h30; // Device I2C address
             byte_rom[1]  = 8'h00; // Reg 0: Page select
@@ -129,8 +85,6 @@ module I2Controller(output SCL, inout SDA, input reset_n, output logic error, in
             byte_rom[27] = 8'h30;
             byte_rom[28] = 8'h5D; // Reg 93 (0x5D) [cite: 571]
             byte_rom[29] = 8'h09; // D7-D4=0000: 0dB [cite: 572], D3=1: Unmute [cite: 572], D0=1: Power up [cite: 582]
-
-           
         end
 
 
