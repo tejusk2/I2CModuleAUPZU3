@@ -7,12 +7,15 @@ module i2s_streamout (
 
     output logic        lr_clk,
     output logic        s_clk,
-    output logic        s_data
+    output logic        s_data,
+    output logic        delay_over
 );
 
-    // =====================================================
-    // Sine ROM
-    // =====================================================
+    localparam [23:0] DELAY_CYCLES = 24'd12_288_000; 
+    
+    logic [23:0] delay_cnt;
+    logic        delay_done;
+
     logic [15:0] sine_amps [0:26];
     logic [4:0]  sample_idx;
 
@@ -28,70 +31,79 @@ module i2s_streamout (
         sine_amps[24] = 16'hADBA; sine_amps[25] = 16'hC689; sine_amps[26] = 16'hE27B;
     end
 
-    // =====================================================
-    // Registers & Counters
-    // =====================================================
-    logic [3:0]  mclk_div;   // Generates S_CLK 
-    logic [4:0]  bclk_cnt;   // Tracks the 32 bits of the I2S frame (0-31)
-    logic [15:0] shift_reg;  // Holds the current sample being shifted out
+    
+    logic [2:0]  mclk_div;   
+    logic [5:0]  bclk_cnt;   
+    logic [15:0] shift_reg;  
 
-    // =====================================================
-    // Logic
-    // =====================================================
+    assign delay_over = delay_done;
+
+    
     always_ff @(posedge master) begin
         if (!ready) begin
+            delay_cnt  <= 0;
+            delay_done <= 0;
             mclk_div   <= 0;
-            bclk_cnt   <= 5'd31; // Start at 31 so the first increment sets it to 0
-            lr_clk     <= 1;     // Start high so it transitions low on cycle 0
+            bclk_cnt   <= 6'd63; // Start at 63 to wrap to 0 on first cycle
+            lr_clk     <= 1;     
             s_clk      <= 0;
             s_data     <= 0;
             sample_idx <= 0;
             shift_reg  <= 0;
         end else begin
             
-            // Divide master clock by 16 for full S_CLK period
+            // Timer Logic
+            if (!delay_done) begin
+                if (delay_cnt == DELAY_CYCLES - 1) begin
+                    delay_done <= 1;
+                end else begin
+                    delay_cnt <= delay_cnt + 1;
+                end
+            end
+            
             mclk_div <= mclk_div + 1;
 
-            // ---------------------------------------------------------
             // FALLING EDGE OF S_CLK: Shift data and WS
-            // ---------------------------------------------------------
-            if (mclk_div == 4'd7) begin
-                logic [4:0]  next_bclk;
+            if (mclk_div == 3'd3) begin
+                logic [5:0]  next_bclk;
                 logic [15:0] next_shift_reg;
 
                 s_clk <= 0;
                 
-                // Calculate next bit index (0 to 31)
                 next_bclk = bclk_cnt + 1;
                 bclk_cnt <= next_bclk;
 
-                // Manage WS / LR_CLK 
-                // Transitions 1 cycle before the MSB is loaded to satisfy the 1-bit delay
-                if (next_bclk == 0)       lr_clk <= 0; // Left channel
-                else if (next_bclk == 16) lr_clk <= 1; // Right channel
+                // WCLK transitions exactly 32 BCLKs apart
+                if (next_bclk == 0)       lr_clk <= 0; 
+                else if (next_bclk == 32) lr_clk <= 1; 
 
-                // Manage Shift Register
+                // Left Channel Data Load (Bit 1)
                 if (next_bclk == 1) begin
-                    // Load Left channel exactly 1 cycle after lr_clk went low
-                    next_shift_reg = tone_switch ? sine_amps[sample_idx] : 16'd1;
-                end else if (next_bclk == 17) begin
-                    // Load Right channel exactly 1 cycle after lr_clk went high
-                    next_shift_reg = tone_switch ? sine_amps[sample_idx] : 16'd1;
-                    // Advance ROM pointer for the next frame
-                    sample_idx <= (sample_idx == 26) ? 0 : sample_idx + 1;
-                end else begin
-                    // Shift out the next bit
-                    next_shift_reg = {shift_reg[14:0], 1'b0};
+                    next_shift_reg = delay_done ? (tone_switch ? sine_amps[sample_idx] : 16'd1) : 16'd0;
+                end 
+                // Right Channel Data Load (Bit 33)
+                else if (next_bclk == 33) begin
+                    next_shift_reg = delay_done ? (tone_switch ? sine_amps[sample_idx] : 16'd1) : 16'd0;
+                    if (delay_done) begin
+                        sample_idx <= (sample_idx == 26) ? 0 : sample_idx + 1;
+                    end
+                end 
+                // Standard Shift or Zero-Pad
+                else begin
+                    // Shift out data for bits 2-16 and 34-48. Pad zeroes for everything else.
+                    if ((next_bclk > 1 && next_bclk <= 16) || (next_bclk > 33 && next_bclk <= 48)) begin
+                        next_shift_reg = {shift_reg[14:0], 1'b0};
+                    end else begin
+                        next_shift_reg = 16'd0; 
+                    end
                 end
 
                 shift_reg <= next_shift_reg;
-                s_data    <= next_shift_reg[15]; // Drive MSB of the shift register
+                s_data    <= next_shift_reg[15]; 
             end
 
-            // ---------------------------------------------------------
-            // RISING EDGE OF S_CLK: Hold data stable for DAC to sample
-            // ---------------------------------------------------------
-            else if (mclk_div == 4'd15) begin
+            // RISING EDGE OF S_CLK: Hold data stable
+            else if (mclk_div == 3'd7) begin
                 s_clk <= 1;
             end
         end

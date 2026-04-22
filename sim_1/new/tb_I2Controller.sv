@@ -22,8 +22,6 @@ module tb_I2C_Controller;
         .error(error)
     );
     
-    // SIMULATE THE PULL-UP
-
     // TESTBENCH SDA DRIVER
     assign sda = (tb_drive_sda_low) ? 1'b0 : 1'bz;
 
@@ -43,24 +41,23 @@ module tb_I2C_Controller;
         tb_drive_sda_low = 0;
         
         forever begin
-            // A. Wait for START Condition (SDA goes low while SCL is high)
+            // Wait for START Condition (SDA goes low while SCL is high)
             @(negedge sda iff scl == 1'b1);
             
             $display("\n--------------------------------------------------");
             $display("Time %t: [Slave] START condition detected", $time);
             
-            // B. Read the first byte (Device Address + R/W)
+            // Read the first byte 
             read_byte(current_byte);
             dev_addr = current_byte[7:1];
             rw_bit   = current_byte[0];
             
-            // C. Evaluate the Address Byte
+            // Evaluate the Address Byte
             // TLV320AIC3204 address is 7'h18. Write bit is 1'b0.
             if (dev_addr == 7'h18 && rw_bit == 1'b0) begin
                 $display("Time %t: [Slave] Valid Address (7'h18) & Write Bit. Sending ACK.", $time);
                 send_ack();
 
-                // D. Inner loop for Register Address and Data bytes
                 forever begin
                     fork
                         begin : read_next_byte
@@ -87,7 +84,7 @@ module tb_I2C_Controller;
 
             end else begin
                 $display("Time %t: [Slave] Invalid Address (7'b%b) or R/W bit. NACKing.", $time, dev_addr);
-                // Do not pull SDA low. Wait for the master to issue a STOP condition.
+                // Wait for the master to issue a STOP condition.
                 @(posedge sda iff scl === 1'b1);
                 $display("Time %t: [Slave] STOP condition detected after NACK.", $time);
             end
@@ -120,9 +117,6 @@ module tb_I2C_Controller;
         tb_drive_sda_low = 0;
     endtask
 
-    // --------------------------------------------------------
-    // Main Stimulus
-    // --------------------------------------------------------
     initial begin
         $display("--- Simulation Start ---");
         reset_n = 0; 
