@@ -19,6 +19,7 @@ set_property PACKAGE_PIN G5 [get_ports i2c_sda]
 set_property IOSTANDARD LVCMOS18 [get_ports i2c_sda]
 set_property PULLTYPE PULLUP [get_ports i2c_sda]
 
+
 # AIC_nRST pin
 set_property PACKAGE_PIN E2 [get_ports codec_rst_n]
 set_property IOSTANDARD LVCMOS18 [get_ports codec_rst_n]
@@ -54,8 +55,22 @@ set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[6]]
 set_property PACKAGE_PIN AF2 [get_ports instruction_leds[7]]
 set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[7]]
 
-#I2S Outputs
+#I2S
 set_property PACKAGE_PIN F3 [get_ports i2s_master_clock]
 set_property IOSTANDARD LVCMOS18 [get_ports i2s_master_clock]
 
+set_property PACKAGE_PIN G1 [get_ports serial_clk]
+set_property IOSTANDARD LVCMOS18 [get_ports serial_clk]
 
+set_property PACKAGE_PIN F2 [get_ports word_clk]
+set_property IOSTANDARD LVCMOS18 [get_ports word_clk]
+
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets word_clk_IBUF_inst/O]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets serial_clk_IBUF_inst/O]
+
+
+set_property PACKAGE_PIN G3 [get_ports serial_i2s_in]
+set_property IOSTANDARD LVCMOS18 [get_ports serial_i2s_in]
+
+set_property PACKAGE_PIN G4 [get_ports serial_i2s_out]
+set_property IOSTANDARD LVCMOS18 [get_ports serial_i2s_out]
