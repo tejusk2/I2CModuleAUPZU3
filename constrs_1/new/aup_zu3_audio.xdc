@@ -31,29 +31,29 @@ set_property IOSTANDARD LVCMOS12 [get_ports init_error]
 set_property PACKAGE_PIN AG9 [get_ports init_done]
 set_property IOSTANDARD LVCMOS12 [get_ports init_done]
 
-set_property PACKAGE_PIN AF5 [get_ports instruction_leds[0]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[0]]
+set_property PACKAGE_PIN AF5 [get_ports {instruction_leds[0]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[0]}]
 
-set_property PACKAGE_PIN AE7 [get_ports instruction_leds[1]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[1]]
+set_property PACKAGE_PIN AE7 [get_ports {instruction_leds[1]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[1]}]
 
-set_property PACKAGE_PIN AH2 [get_ports instruction_leds[2]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[2]]
+set_property PACKAGE_PIN AH2 [get_ports {instruction_leds[2]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[2]}]
 
-set_property PACKAGE_PIN AE5 [get_ports instruction_leds[3]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[3]]
+set_property PACKAGE_PIN AE5 [get_ports {instruction_leds[3]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[3]}]
 
-set_property PACKAGE_PIN AH1 [get_ports instruction_leds[4]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[4]]
+set_property PACKAGE_PIN AH1 [get_ports {instruction_leds[4]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[4]}]
 
-set_property PACKAGE_PIN AE4 [get_ports instruction_leds[5]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[5]]
+set_property PACKAGE_PIN AE4 [get_ports {instruction_leds[5]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[5]}]
 
-set_property PACKAGE_PIN AG1 [get_ports instruction_leds[6]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[6]]
+set_property PACKAGE_PIN AG1 [get_ports {instruction_leds[6]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[6]}]
 
-set_property PACKAGE_PIN AF2 [get_ports instruction_leds[7]]
-set_property IOSTANDARD LVCMOS12 [get_ports instruction_leds[7]]
+set_property PACKAGE_PIN AF2 [get_ports {instruction_leds[7]}]
+set_property IOSTANDARD LVCMOS12 [get_ports {instruction_leds[7]}]
 
 #I2S
 set_property PACKAGE_PIN F3 [get_ports i2s_master_clock]
@@ -68,9 +68,11 @@ set_property IOSTANDARD LVCMOS18 [get_ports word_clk]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets word_clk_IBUF_inst/O]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets serial_clk_IBUF_inst/O]
 
-
+#Codec Input
 set_property PACKAGE_PIN G3 [get_ports serial_i2s_in]
 set_property IOSTANDARD LVCMOS18 [get_ports serial_i2s_in]
 
+#Codec Output
 set_property PACKAGE_PIN G4 [get_ports serial_i2s_out]
 set_property IOSTANDARD LVCMOS18 [get_ports serial_i2s_out]
+

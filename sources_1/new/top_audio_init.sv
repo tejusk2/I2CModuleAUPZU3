@@ -17,7 +17,7 @@ module top_audio_init (
     output logic i2s_master_clock,
     output logic [7:0]instruction_leds,
     output logic serial_i2s_in,
-    output logic serial_i2s_out
+    input logic serial_i2s_out
 );
 
     logic sys_clk;
@@ -30,6 +30,11 @@ module top_audio_init (
     logic [15:0] filter_output;
     logic output_ready;
     logic read_done;
+
+    (* mark_debug = "true", dont_touch = "true" *) logic debug_wclk;
+    (* mark_debug = "true", dont_touch = "true" *) logic debug_sclk;
+    (* mark_debug = "true", dont_touch = "true" *) logic debug_s_data_o;
+    (* mark_debug = "true", dont_touch = "true" *) logic debug_s_data_i;
     
     // Convert Differential 100MHz clock to Single-Ended
     IBUFDS #(
@@ -41,16 +46,24 @@ module top_audio_init (
         .IB(sys_clk_n)
     );
     //50 Mhz clock for I2S
-    logic [1:0] mclk_counter = 0;
+    (* mark_debug = "true" *) logic [1:0] mclk_counter = 0;
 
     always_ff @(posedge sys_clk) begin
         mclk_counter <= mclk_counter + 1;
     end
 
-    assign i2s_master_clock = mclk_counter[1];
+    assign i2s_master_clock = mclk_counter[0];
     assign sys_rst_n = ~system_rst; 
     assign codec_rst_n = sys_rst_n;
     assign init_done = i2c_write_done;
+
+    assign debug_s_data_i = serial_i2s_in;
+    assign debug_s_data_o = serial_i2s_out;
+
+    assign debug_sclk = serial_clk;
+    assign debug_wclk = word_clk;
+
+
     // I2C Controller running on the 100MHz system clock
     I2Controller i2c_mac (
         .master_clock(sys_clk),

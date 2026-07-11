@@ -2,7 +2,7 @@
 
 module tb_combfilter;
     //refrence model
-    logic [15:0] ref_bram [440:0];
+    logic signed [15:0] ref_bram [440:0];
     logic [8:0] bram_pointer = 0;
     logic [15:0] golden_output = 0;
     //Signal Initialization
@@ -76,7 +76,7 @@ module tb_combfilter;
         
         //I2S Writer to simulate the ADC
         @(posedge rst_n);
-        @(negedge word_clk);
+        @(posedge word_clk);
         while (line_counter <= 10000) begin
             if ($fgets(hex_in, fd)) begin
                 input_data = hex_in.atohex();
@@ -152,15 +152,15 @@ module tb_combfilter;
         //safely read one behind the write pointer
         //models dut behavior, doesn't read from memory we just wrote in the earlier part of the cycle
         logic [8:0] read_pointer;
-        logic [17:0]full_product;
-        logic [15:0]shifted_product;
+        logic signed [17:0]full_product;
+        logic signed [15:0]shifted_product;
         if(bram_pointer == 9'd440)begin
             read_pointer = 9'd0;
         end else begin
             read_pointer = bram_pointer + 1;
         end
-        full_product = 3*ref_bram[read_pointer];
-        shifted_product = full_product[17:2];
+        full_product = 3'sd3*ref_bram[read_pointer];
+        shifted_product = full_product >>> 2;
         golden_output = shifted_product + current_expected;
         //check for overflow
         //If inputs have same signs but output has different sign

@@ -7,14 +7,14 @@ module i2s_streamout (input logic wclk, input logic sclk, input logic [15:0] inp
     assign data_out_bit = serial_word[15];
     always_ff @(negedge sclk) begin
         if(~rst_n)begin
-            serial_word <= 9'd0;
+            serial_word <= 16'd0;
         end else begin
             //ready is a flag from the I2C Controller when its done writing
             if(ready)begin
                 if(read_done)begin
                     serial_word <= input_data;
                 end else begin
-                    serial_word <= serial_word<<2;
+                    serial_word <= serial_word<<1;
                 end
             end
         end

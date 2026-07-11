@@ -3,22 +3,28 @@
 module FilterController(input logic sclk, input logic wclk, 
 input logic [15:0] in_data, input logic read_done, input logic rst_n, input logic ready,
 output logic [15:0] out_data, output logic output_ready);
+
+    localparam int FILTER_DELAY = 4410; 
+    localparam int ADDR_SIZE = 13; //13 for 4410, 9 for 441
     logic r_en;
     logic w_en;
     logic [15:0] bram_data_in;
     logic [15:0] bram_data_out;
     logic [15:0] read_data;
 
-    logic [8:0] read_pointer;
-    logic [8:0] write_pointer;
+    logic [ADDR_SIZE-1:0] read_pointer;
+    logic [ADDR_SIZE-1:0] write_pointer;
 
     logic first_read_happened;
 
-    logic [8:0] write_addr;
+    logic [ADDR_SIZE-1:0] write_addr;
     logic [15:0] write_data;
-    logic [8:0] read_addr;
+    logic [ADDR_SIZE-1:0] read_addr;
 
-    xilinx_simple_dual_port_bram bramTen(
+    xilinx_simple_dual_port_bram #(
+        .DATA_WIDTH(16),
+        .ADDR_WIDTH(ADDR_SIZE)
+    ) bramTen (
         .clk(sclk),
         .en_a(w_en),
         .en_b(r_en),
@@ -46,16 +52,16 @@ output logic [15:0] out_data, output logic output_ready);
     //This does in fact change the pointer at the end of the clock edge, but so does the write block
     always_ff @ (negedge wclk)begin
         if(~rst_n)begin
-            read_pointer <= 9'd0;
+            read_pointer <= 0;
             r_en <= 0;
             first_read_happened <= 0;
-            read_addr <= 9'd0;
+            read_addr <= 0;
         end else begin
             if(ready)begin
                 r_en <= 1;
                 first_read_happened <= 1;
                 read_addr <= read_pointer;
-                if(read_pointer == 9'd440)begin
+                if(read_pointer == FILTER_DELAY-1)begin
                     read_pointer <= 9'd0;
                 end else begin
                     read_pointer <= read_pointer + 1;
@@ -67,10 +73,10 @@ output logic [15:0] out_data, output logic output_ready);
     //Sends the data on the negedge of sclk when wclk is low and read_done is high, two cycles have passed
     always_ff @ (negedge sclk)begin
         if(~rst_n)begin
-            write_pointer <= 9'd440;
+            write_pointer <= FILTER_DELAY-1;
             w_en <= 0;
             output_ready <= 0;
-            write_addr <= 9'd440;
+            write_addr <= FILTER_DELAY-1;
         end else begin
             //Mostly for the testbench to verify
             if(ready)begin
@@ -84,8 +90,8 @@ output logic [15:0] out_data, output logic output_ready);
                     bram_data_in <= write_data;
                     write_addr <= write_pointer;
                     w_en <= 1;
-                    if(write_pointer == 9'd440)begin
-                        write_pointer <= 9'd0;
+                    if(write_pointer == FILTER_DELAY-1)begin
+                        write_pointer <= 0;
                     end else begin
                         write_pointer <= write_pointer + 1;
                     end
